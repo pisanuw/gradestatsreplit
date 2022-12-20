@@ -53,7 +53,9 @@ def create_bar_plot():
   fig = Figure()
   axis = fig.add_subplot(1, 1, 1)
   global decBuckets
-  decBuckets = [int(x) for x in request.form['cutoffs'].split('\n') if x.strip() != ""]
+  decBuckets = [
+    float(x) for x in request.form['cutoffs'].split('\n') if x.strip() != ""
+  ]
   props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
   data = [x for x in request.form['grades'].split('\n') if x.strip() != ""]
   textstr = get_dist_stats(data)
@@ -75,7 +77,7 @@ def create_bar_plot():
 
 
 def get_dist_stats(data):
-  intData = [int(x) for x in data if isInt(x)]
+  intData = [float(x) for x in data if isFloat(x)]
   stdevA = "0"
   if len(intData) > 1:
     stdevA = str(round(statistics.stdev(intData), 1))
@@ -95,11 +97,11 @@ def data_into_buckets(data):
   buckets = [0] * (len(decBuckets) + 2)
   # ["<50", "50-59", "60-69", "70-79", "80-89", ">=90", "NaN"]
   for grade in data:
-    if not isInt(grade):
+    if not isFloat(grade):
       buckets[-1] = buckets[-1] + 1
       continue
     else:
-      grade = int(grade)
+      grade = float(grade)
     i = 0
     inserted = False
     while not inserted and i < len(decBuckets):
@@ -112,9 +114,9 @@ def data_into_buckets(data):
   return buckets
 
 
-def isInt(s):
+def isFloat(s):
   try:
-    int(s)
+    float(s)
     return True
   except ValueError:
     return False
