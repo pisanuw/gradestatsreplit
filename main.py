@@ -93,14 +93,16 @@ def get_dist_stats(data, cutoffs, distribution):
     percentages = "%s: [" + ", ".join(
       [str(int(round(x / total, 0))) for x in distribution]) + "]"
     stdevA = str(round(statistics.stdev(intData), 1))
-  textstr = '\n'.join(
-    ("Total: " + str(len(data)),
-     "Mean: " + str(round(statistics.mean(intData), 1)),
-     "Median: " + str(round(statistics.median(intData), 1)),
-     # "Mode: " + str(round(statistics.mode(intData), 1)), "Stdev: " + stdevA,
-     "Min: " + str(round(min(intData), 1)),
-     "Max: " + str(round(max(intData), 1)),
-     "Dist: [" + ", ".join([str(x) for x in distribution]) + "]", percentages))
+  textstr = '\n'.join((
+    "Total: " + str(len(data)),
+    "Mean: " + str(round(statistics.mean(intData), 1)),
+    "Median: " + str(round(statistics.median(intData), 1)),
+    # "Mode: " + str(round(statistics.mode(intData), 1)),
+    "Stdev: " + stdevA,
+    "Min: " + str(round(min(intData), 1)),
+    "Max: " + str(round(max(intData), 1)),
+    "Dist: [" + ", ".join([str(x) for x in distribution]) + "]",
+    percentages))
   return textstr
 
 
