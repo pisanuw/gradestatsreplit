@@ -10,14 +10,17 @@ app = Flask(__name__)
 decBuckets = [50, 60, 70, 80, 90]
 
 
-def buckets2labels(buckets):
+def buckets2labels():
+  buckets = [
+    x.strip() for x in request.form['cutoffs'].split('\n') if x.strip() != ""
+  ]
   label = []
-  label.append("<" + str(buckets[0]))
+  label.append("<" + buckets[0])
   i = 1
   while i < len(buckets):
-    label.append(str(buckets[i - 1]) + "-" + str(buckets[i]))
+    label.append(buckets[i - 1] + "-" + buckets[i])
     i = i + 1
-  label.append(">=" + str(buckets[-1]))
+  label.append(">=" + buckets[-1])
   label.append("NaN")
   return label
 
@@ -58,7 +61,7 @@ def create_bar_plot():
   ]
   props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
   data = [x for x in request.form['grades'].split('\n') if x.strip() != ""]
-  textstr = get_dist_stats(data)
+  textstr = get_dist_stats(data, decBuckets)
   axis.text(0.02,
             0.95,
             textstr,
@@ -67,16 +70,20 @@ def create_bar_plot():
             verticalalignment='top',
             bbox=props)
   # xs = ["<50", "50-59", "60-69", "70-79", "80-89", ">=90", "NaN"]
-  xs = buckets2labels(decBuckets)
-  ys = data_into_buckets(data)
+  xs = buckets2labels()
+  ys = data_into_buckets(data, decBuckets)
+  # if no NaN data get rid of the bucket and the label
+  if ys[-1] == 0:
+    xs.pop()
+    ys.pop()
   axis.bar(xs, ys)
-  axis.set_xlabel("Decimal Grades")
+  axis.set_xlabel("Grades")
   axis.set_ylabel("# of Students")
   # fig.suptitle("Course Number")
   return fig
 
 
-def get_dist_stats(data):
+def get_dist_stats(data, cutoffs):
   intData = [float(x) for x in data if isFloat(x)]
   stdevA = "0"
   if len(intData) > 1:
@@ -88,13 +95,14 @@ def get_dist_stats(data):
      "Mode: " + str(round(statistics.mode(intData), 1)), "Stdev: " + stdevA,
      "Min: " + str(round(min(intData), 1)),
      "Max: " + str(round(max(intData), 1)),
-     "Dist: [" + ", ".join([str(x) for x in data_into_buckets(data)]) + "]"))
+     "Dist: [" + ", ".join([str(x)
+                            for x in data_into_buckets(data, cutoffs)]) + "]"))
   return textstr
 
 
-def data_into_buckets(data):
+def data_into_buckets(data, cutoffs):
   # buckets = [0, 0, 0, 0, 0, 0, 0]
-  buckets = [0] * (len(decBuckets) + 2)
+  buckets = [0] * (len(cutoffs) + 2)
   # ["<50", "50-59", "60-69", "70-79", "80-89", ">=90", "NaN"]
   for grade in data:
     if not isFloat(grade):
@@ -104,8 +112,8 @@ def data_into_buckets(data):
       grade = float(grade)
     i = 0
     inserted = False
-    while not inserted and i < len(decBuckets):
-      if grade < decBuckets[i]:
+    while not inserted and i < len(cutoffs):
+      if grade < cutoffs[i]:
         inserted = True
         buckets[i] = buckets[i] + 1
       i = i + 1
