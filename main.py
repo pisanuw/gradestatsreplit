@@ -61,7 +61,13 @@ def create_bar_plot():
   ]
   props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
   data = [x for x in request.form['grades'].split('\n') if x.strip() != ""]
-  textstr = get_dist_stats(data, decBuckets)
+  # xs = ["<50", "50-59", "60-69", "70-79", "80-89", ">=90", "NaN"]
+  xs = buckets2labels()
+  ys = data_into_buckets(data, decBuckets)
+  # if no NaN data get rid of the bucket and the label
+  if len(xs) > len(ys):
+    xs.pop()
+  textstr = get_dist_stats(data, decBuckets, ys)
   axis.text(0.02,
             0.95,
             textstr,
@@ -69,13 +75,6 @@ def create_bar_plot():
             fontsize=10,
             verticalalignment='top',
             bbox=props)
-  # xs = ["<50", "50-59", "60-69", "70-79", "80-89", ">=90", "NaN"]
-  xs = buckets2labels()
-  ys = data_into_buckets(data, decBuckets)
-  # if no NaN data get rid of the bucket and the label
-  if ys[-1] == 0:
-    xs.pop()
-    ys.pop()
   axis.bar(xs, ys)
   axis.set_xlabel("Grades")
   axis.set_ylabel("# of Students")
@@ -83,20 +82,25 @@ def create_bar_plot():
   return fig
 
 
-def get_dist_stats(data, cutoffs):
+def get_dist_stats(data, cutoffs, distribution):
   intData = [float(x) for x in data if isFloat(x)]
   stdevA = "0"
   if len(intData) > 1:
+    total = 0
+    for x in distribution:
+      total = total + x
+    total = total / 100
+    percentages = "%s: [" + ", ".join(
+      [str(int(round(x / total, 0))) for x in distribution]) + "]"
     stdevA = str(round(statistics.stdev(intData), 1))
   textstr = '\n'.join(
     ("Total: " + str(len(data)),
      "Mean: " + str(round(statistics.mean(intData), 1)),
      "Median: " + str(round(statistics.median(intData), 1)),
-     "Mode: " + str(round(statistics.mode(intData), 1)), "Stdev: " + stdevA,
+     # "Mode: " + str(round(statistics.mode(intData), 1)), "Stdev: " + stdevA,
      "Min: " + str(round(min(intData), 1)),
      "Max: " + str(round(max(intData), 1)),
-     "Dist: [" + ", ".join([str(x)
-                            for x in data_into_buckets(data, cutoffs)]) + "]"))
+     "Dist: [" + ", ".join([str(x) for x in distribution]) + "]", percentages))
   return textstr
 
 
@@ -119,6 +123,8 @@ def data_into_buckets(data, cutoffs):
       i = i + 1
     if not inserted:
       buckets[-2] = buckets[-2] + 1
+  if buckets[-1] == 0:
+    buckets.pop()
   return buckets
 
 
